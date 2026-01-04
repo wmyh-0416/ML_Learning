@@ -13,13 +13,26 @@ def main():
     train = pd.read_csv("/Users/wmyh0416/Desktop/ML_Learning/Titanic/Titanic_datasets/train.csv")
     test = pd.read_csv("/Users/wmyh0416/Desktop/ML_Learning/Titanic/Titanic_datasets/test.csv")
 
-    features = ["Pclass","Sex","Age","SibSp","Parch","Fare","Embarked"] #Feature selection: These features are more responsible for the prediction
+    #Feature engineering
+    #Passengers with small to medium family sizes tend to have higher survival rates
+    train["FamilySize"] = train["SibSp"] + train["Parch"] + 1
+    test["FamilySize"] = test["SibSp"] + test["Parch"] + 1
+
+    train["Title"] = train["Name"].str.extract(r" ([A-Za-z]+)\.",expand=False)
+    test["Title"] = test["Name"].str.extract(r" ([A-Za-z]+)\.",expand=False)
+
+    rare_titles = ["Lady","Countess","Capt","Col","Don","Dr","Major","Rev","Sir","Jonkheer","Dona"]
+    train["Title"] = train["Title"].replace(rare_titles,"Rare")
+    test["Title"] = test["Title"].replace(rare_titles,"Rare")
+
+    features = ["Pclass","Sex","Age","SibSp","Parch","Fare","Embarked", #Feature selection: These features are more responsible for the prediction
+                "FamilySize","Title"]   # new features after feature engineering!!!
     X = train[features]
     y = train["Survived"]
     X_test = test[features]
 
-    num_cols = ["Pclass","Age","SibSp","Parch","Fare"]
-    cat_cols = ["Sex","Embarked"]
+    num_cols = ["Pclass","Age","SibSp","Parch","Fare","FamilySize"]
+    cat_cols = ["Sex","Embarked","Title"]
 
     preprocess = ColumnTransformer(
         transformers=[
@@ -52,8 +65,8 @@ def main():
         "PassengerId": test["PassengerId"],
         "Survived": test_pred
     })
-    submission.to_csv("submission_baseline.csv", index=False)
-    print("Saved submission_baseline.csv")
+    submission.to_csv("submission_feature_engineering.csv", index=False)
+    print("Saved submission_feature_engineering.csv")
 
 
 if __name__ == "__main__":
